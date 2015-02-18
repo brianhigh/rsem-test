@@ -36,6 +36,7 @@ library(SRAdb)
 library(pryr)
 ```
 
+
 ```{r query-GEO}
 Sys.time()
 mem_used()
@@ -43,6 +44,7 @@ gd <- getGEO("GSE45735", destdir = "RSEM_test/GEO/")
 pd <- pData(gd[[1]])
 ```
 
+Set up the time and the data 
 ```{r query-SRA-db}
 Sys.time()
 mem_used()
@@ -219,5 +221,7 @@ tx_table_reduced <- tx_table[,list(entrez_id=paste(unique(entrez_id),collapse=",
 # Write to disc and order by gene_id
 write.csv(tx_table_reduced[order(gene_id)], file="RSEM_test/RSEM/rsem_fdata.csv", row.names=FALSE)
 ```
+Aisha:
 
+The end 
 
