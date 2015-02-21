@@ -78,27 +78,34 @@ SRX_number <- rep(NA, nrow(pd_small))
 
 
 ```r
-# Find an SSH key for Aspera Connect
-sshkey <- '/etc/aspera/asperaweb_id_dsa.openssh' # Use this if not found in ~
-macsshkey <- '~/Applications/Aspera\\ Connect.app/Contents/Resources/asperaweb_id_dsa.openssh'
-if(file.exists(macsshkey)) { sshkey <- macsshkey }
-linuxsshkey <- '~/.aspera/connect/etc/asperaweb_id_dsa.openssh'
-if(file.exists(linuxsshkey)) { sshkey <- linuxsshkey }
+# Find ascp utility and SSH key for Aspera Connect
+ascp <- '/usr/local/bin/ascp'
+sshkey <- '/etc/aspera/asperaweb_id_dsa.openssh'
+if(! (file.exists(ascp) & (file.exists(sshkey)))) {
+    switch(Sys.info()[['sysname']],
+    Linux  = {
+             asperahome <- '~/.aspera/connect/'
+             ascp <- paste0(asperahome, 'bin/ascp')
+             sshkey <- paste0(asperahome, 'etc/asperaweb_id_dsa.openssh')
+         },
+    Darwin = {
+             asperahome <- '~/Applications/Aspera\\ Connect.app/Contents/Resources/'
+             ascp <- paste0(asperahome, 'ascp')
+             sshkey <- paste0(asperahome, 'asperaweb_id_dsa.openssh')
+         }
+    )
+}
 
 for(i in 1:nrow(pd_small)) {
     gd <- getGEO(pd_small$geo_accession[i], destdir="RSEM_test/GEO/")
     SRX_number[i] <- gsub(".*=SRX", "SRX", gd@header$relation[1])
-  
+
     # Convert to aspera address
-	run_accession <- listSRAfile(SRX_number[i], sra_con, fileType = "sra" )$run
-	aspera_url <- paste0("anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra", 
-                         "/", substr(run_accession,1,3), "/", substr(run_accession,1,6), 
-                         "/", run_accession, "/", run_accession, ".sra")
-    if(file.exists(sshkey)) {
-	    system(paste0('ascp -i ', sshkey ,' -k 1 -T -l200m ', aspera_url, " RSEM_test/SRA"))
-    } else { 
-        print("Can't find aspera connect sshkey!") 
-    }
+    run_accession <- listSRAfile(SRX_number[i], sra_con, fileType = "sra" )$run
+    aspera_url <- paste0("anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra",
+        "/", substr(run_accession,1,3), "/", substr(run_accession,1,6),
+        "/", run_accession, "/", run_accession, ".sra")
+    system(paste0(ascp, ' -i ', sshkey ,' -k 1 -T -l200m ', aspera_url, " RSEM_test/SRA"))
 }
 ```
 
@@ -219,12 +226,63 @@ require(txdbpkg, character.only=TRUE) || {
 ```
 
 ```
+## Loading required package: TxDb.Hsapiens.UCSC.hg19.knownGene
+## Loading required package: GenomicFeatures
+## Loading required package: S4Vectors
+## Loading required package: stats4
+## Loading required package: IRanges
+## 
+## Attaching package: 'IRanges'
+## 
+## The following object is masked from 'package:data.table':
+## 
+##     shift
+## 
+## Loading required package: GenomeInfoDb
+## Loading required package: GenomicRanges
+## Loading required package: AnnotationDbi
+## 
+## Attaching package: 'AnnotationDbi'
+## 
+## The following object is masked from 'package:GenomeInfoDb':
+## 
+##     species
+```
+
+```
 ## [1] TRUE
 ```
 
 ```r
 library(annotate)
+```
+
+```
+## Loading required package: XML
+## 
+## Attaching package: 'XML'
+## 
+## The following object is masked from 'package:graph':
+## 
+##     addNode
+## 
+## 
+## Attaching package: 'annotate'
+## 
+## The following object is masked from 'package:GenomeInfoDb':
+## 
+##     organism
+```
+
+```r
 library(org.Hs.eg.db)
+```
+
+```
+## 
+```
+
+```r
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 # create a table with one transcript per line
